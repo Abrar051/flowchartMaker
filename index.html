@@ -814,23 +814,88 @@ function doExport(){
   if(f==='svg')xSVG(); else xRaster(f,sc);
   closeModal();
 }
-function xSVG(){const b=new Blob([svg],{type:'image/svg+xml'});const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(b),download:'diagram.svg'});a.click();URL.revokeObjectURL(a.href);}
-function xRaster(fmt,sc){
-  const el=document.querySelector('#preview svg');if(!el)return;
-  // Use natural SVG dimensions, not screen dimensions
-  const vb = el.viewBox.baseVal;
-  const w = vb.width || parseFloat(el.getAttribute('width')) || 800;
-  const h = vb.height || parseFloat(el.getAttribute('height')) || 600;
-  const cv=document.createElement('canvas');cv.width=w*sc;cv.height=h*sc;
-  const ctx=cv.getContext('2d');
-  if(fmt==='jpg'){ctx.fillStyle=document.getElementById('themeSelect').value==='dark'?'#0d0d14':'#fff';ctx.fillRect(0,0,cv.width,cv.height);}
-  const d=new XMLSerializer().serializeToString(el);
-  const blob=new Blob([d],{type:'image/svg+xml;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const img=new Image();
-  img.onload=()=>{ctx.drawImage(img,0,0,cv.width,cv.height);URL.revokeObjectURL(url);cv.toBlob(b=>{const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(b),download:`diagram.${fmt}`});a.click();},fmt==='jpg'?'image/jpeg':'image/png',fmt==='jpg'?.95:1);};
-  img.onerror=()=>alert('Export failed — try SVG format.');
-  img.src=url;
+function xSVG() {
+  const el = document.querySelector('#preview svg');
+  if (!el) { alert('No diagram to export.'); return; }
+  // Clone and ensure proper namespaces
+  const clone = el.cloneNode(true);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  const serialized = new XMLSerializer().serializeToString(clone);
+  const b = new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(b), download: 'diagram.svg' });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function xRaster(fmt, sc) {
+  const el = document.querySelector('#preview svg');
+  if (!el) { alert('No diagram to export.'); return; }
+
+  // Get real rendered dimensions (ignoring pan/zoom transform)
+  // Temporarily reset transform to get true size
+  const savedTransform = viewport.style.transform;
+  viewport.style.transform = 'translate(0px,0px) scale(1)';
+
+  // Force layout recalc
+  const bbox = el.getBoundingClientRect();
+  let w = bbox.width;
+  let h = bbox.height;
+
+  // Restore transform
+  viewport.style.transform = savedTransform;
+
+  // Fallback to viewBox
+  if (!w || !h) {
+    const vb = el.viewBox?.baseVal;
+    w = (vb && vb.width > 0) ? vb.width : parseFloat(el.getAttribute('width')) || 800;
+    h = (vb && vb.height > 0) ? vb.height : parseFloat(el.getAttribute('height')) || 600;
+  }
+
+  w = Math.round(w); h = Math.round(h);
+
+  // Clone SVG and set explicit size + namespaces
+  const clone = el.cloneNode(true);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  clone.setAttribute('width', w);
+  clone.setAttribute('height', h);
+  if (!clone.getAttribute('viewBox') || clone.getAttribute('viewBox') === '0 0 0 0') {
+    clone.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  }
+
+  const svgStr = new XMLSerializer().serializeToString(clone);
+  const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = w * sc;
+    canvas.height = h * sc;
+    const ctx = canvas.getContext('2d');
+
+    // Background fill
+    ctx.fillStyle = fmt === 'jpg'
+      ? (document.getElementById('themeSelect').value === 'dark' ? '#0d0d14' : '#ffffff')
+      : '#ffffff';
+    if (fmt === 'jpg' || fmt === 'png') ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+
+    canvas.toBlob(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `diagram.${fmt}`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }, fmt === 'jpg' ? 'image/jpeg' : 'image/png', fmt === 'jpg' ? 0.95 : 1);
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    alert('Raster export failed. Try downloading as SVG instead.');
+  };
+  img.src = url;
 }
 
 // ── PAN / ZOOM ENGINE ─────────────────────────────────────────────────────
