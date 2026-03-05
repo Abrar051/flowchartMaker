@@ -156,6 +156,7 @@ select option { background:#18181f; }
 .ai-typing span { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:tdot .9s infinite; }
 .ai-typing span:nth-child(2){animation-delay:.18s} .ai-typing span:nth-child(3){animation-delay:.36s}
 @keyframes tdot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 6px rgba(239,68,68,.0)}}
 </style>
 </head>
 <body>
@@ -307,18 +308,26 @@ select option { background:#18181f; }
   <!-- Input area -->
   <div style="padding:12px;border-top:1px solid var(--border);flex-shrink:0">
     <div style="display:flex;gap:8px;align-items:flex-end">
-      <textarea id="aiInput" placeholder="Describe your diagram… e.g. 'A login flow with OAuth'" rows="3"
+      <textarea id="aiInput" placeholder="Describe your diagram… or click 🎤 to speak" rows="3"
         style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:12.5px;padding:9px 12px;border-radius:8px;outline:none;resize:none;line-height:1.5;transition:border-color .15s"
         onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();sendAI()}"
       ></textarea>
-      <button onclick="sendAI()" id="aiSendBtn" style="
-        background:linear-gradient(135deg,#f59e0b,#f97316);color:#1a0a00;
-        border:none;border-radius:8px;width:38px;height:38px;cursor:pointer;
-        font-size:16px;display:flex;align-items:center;justify-content:center;
-        flex-shrink:0;transition:all .15s;font-weight:700
-      " title="Send (Ctrl+Enter)">↑</button>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button onclick="toggleMic()" id="micBtn" style="
+          background:var(--surface2);border:1px solid var(--border);color:var(--dim);
+          border-radius:8px;width:38px;height:38px;cursor:pointer;
+          font-size:16px;display:flex;align-items:center;justify-content:center;
+          flex-shrink:0;transition:all .15s;
+        " title="Voice input (click to start/stop)">🎤</button>
+        <button onclick="sendAI()" id="aiSendBtn" style="
+          background:linear-gradient(135deg,#f59e0b,#f97316);color:#1a0a00;
+          border:none;border-radius:8px;width:38px;height:38px;cursor:pointer;
+          font-size:16px;display:flex;align-items:center;justify-content:center;
+          flex-shrink:0;transition:all .15s;font-weight:700
+        " title="Send (Ctrl+Enter)">↑</button>
+      </div>
     </div>
-    <div style="font-size:10px;color:var(--muted);margin-top:5px;font-family:var(--mono)">Ctrl+Enter to send · AI outputs Mermaid code you can apply to the editor</div>
+    <div id="micStatus" style="font-size:10px;color:var(--muted);margin-top:5px;font-family:var(--mono);min-height:14px">Ctrl+Enter to send · 🎤 mic to speak</div>
   </div>
 
   <!-- Key management footer -->
@@ -729,9 +738,74 @@ function load(id) {
   render();
 }
 
+// ── SANITIZE — fix common copy-paste and syntax issues before parsing
+function sanitizeCode(code) {
+  let out = code
+    // Non-standard Unicode hyphens → regular hyphen
+    .replace(/\u2011/g, '-')   // non-breaking hyphen
+    .replace(/\u2013/g, '-')   // en-dash
+    .replace(/\u2014/g, '--')  // em-dash
+    // Non-breaking space → regular space
+    .replace(/\u00A0/g, ' ')
+    // Curly quotes → straight quotes
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    // Zero-width invisible chars
+    .replace(/[\u200B\u200C\u200D\uFEFF]/g, '');
+
+  // Fix parentheses inside node labels [ ] — parser confuses () with special node shapes
+  // Replace [Label (note)] with [Label note]
+  out = out.replace(/\[([^\]]*)\]/g, (match, content) => {
+    // Remove parentheses and their content style — keep the text inside
+    const fixed = content.replace(/\s*\(([^)]*)\)/g, ' $1').trim();
+    return `[${fixed}]`;
+  });
+
+  // Fix `&` inside node labels [ ] — Mermaid parser chokes on bare &
+  // Replace [... & ...] with [... and ...]
+  out = out.replace(/\[([^\]]*?)&([^\]]*?)\]/g, (_, a, b) => `[${a}and${b}]`);
+
+  // Fix `&` inside edge labels | | 
+  out = out.replace(/\|([^|]*?)&([^|]*?)\|/g, (_, a, b) => `|${a}and${b}|`);
+
+  // Fix subgraph names with spaces — must be quoted: subgraph id["Name"]
+  // Pattern: subgraph <word(s) with spaces> (no quotes already)
+  out = out.replace(/^(\s*subgraph\s+)([A-Za-z][A-Za-z0-9 _]*[A-Za-z0-9])(\s*$)/gm,
+    (_, prefix, name) => {
+      // If already has quotes or is single word, leave it
+      if (name.includes('"') || name.includes('[') || !name.includes(' ')) return prefix + name;
+      // Convert to: subgraph safeId["Original Name"]
+      const safeId = name.replace(/\s+/g, '_');
+      return `${prefix}${safeId}["${name}"]`;
+    }
+  );
+
+  // Fix node IDs that are JS/Mermaid reserved words
+  // These cause silent parse failures: end, default, do, if, for, etc.
+  const reserved = /^(end|default|do|if|for|while|class|return|DO|IN)$/;
+  out = out.replace(/\b(end|default|do|if|for|while|class|return|DO|IN)\[/g, (match, word) => {
+    return `node_${word}[`;
+  });
+  // Fix references to those reserved IDs in arrows
+  out = out.replace(/--> (end|default|do|if|for|while|class|return|DO|IN)\b/g, (_, word) => {
+    return `--> node_${word}`;
+  });
+  out = out.replace(/\b(end|default|do|if|for|while|class|return|DO|IN) -->/g, (_, word) => {
+    return `node_${word} -->`;
+  });
+
+  return out;
+}
+
 // ── RENDER
 async function render() {
-  const code = document.getElementById('editor').value.trim();
+  const raw = document.getElementById('editor').value.trim();
+  const code = sanitizeCode(raw);
+  // Write sanitized code back to editor if anything changed
+  if (code !== raw) {
+    document.getElementById('editor').value = code;
+    updateLI();
+  }
   const out = document.getElementById('preview');
   const dot = document.getElementById('sdot');
   const st = document.getElementById('stext');
@@ -1242,7 +1316,111 @@ async function sendAI() {
   }
 }
 
-// ── BOOT
+// ── SPEECH TO TEXT (Web Speech API — free, built into Chrome/Edge/Safari) ──
+let recognition = null;
+let isRecording = false;
+
+function initSpeech() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+  const r = new SpeechRecognition();
+  r.continuous = true;        // keep listening until manually stopped
+  r.interimResults = true;    // show live partial results as you speak
+  r.lang = 'en-US';
+  r.maxAlternatives = 1;
+
+  let finalTranscript = '';
+
+  r.onstart = () => {
+    isRecording = true;
+    finalTranscript = document.getElementById('aiInput').value;
+    setMicState(true);
+  };
+
+  r.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) { finalTranscript += t + ' '; }
+      else { interim = t; }
+    }
+    // Show final + interim in textarea
+    document.getElementById('aiInput').value = finalTranscript + interim;
+    setMicStatus('🔴 Listening… ' + (interim ? '"' + interim + '"' : ''));
+  };
+
+  r.onerror = (e) => {
+    setMicState(false);
+    isRecording = false;
+    if (e.error === 'not-allowed') {
+      setMicStatus('⚠ Microphone permission denied — allow mic access in browser settings');
+    } else if (e.error === 'no-speech') {
+      setMicStatus('No speech detected — try again');
+    } else {
+      setMicStatus('⚠ Speech error: ' + e.error);
+    }
+    setTimeout(() => setMicStatus('Ctrl+Enter to send · 🎤 mic to speak'), 3000);
+  };
+
+  r.onend = () => {
+    isRecording = false;
+    setMicState(false);
+    // Trim trailing space left by speech recognition
+    const inp = document.getElementById('aiInput');
+    inp.value = inp.value.trimEnd();
+    setMicStatus('✓ Done — review text then send');
+    setTimeout(() => setMicStatus('Ctrl+Enter to send · 🎤 mic to speak'), 3000);
+  };
+
+  return r;
+}
+
+function setMicState(active) {
+  const btn = document.getElementById('micBtn');
+  if (!btn) return;
+  if (active) {
+    btn.style.background = 'rgba(239,68,68,.15)';
+    btn.style.borderColor = '#ef4444';
+    btn.style.color = '#ef4444';
+    btn.style.animation = 'micPulse 1s infinite';
+    btn.title = 'Recording… click to stop';
+  } else {
+    btn.style.background = 'var(--surface2)';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--dim)';
+    btn.style.animation = 'none';
+    btn.title = 'Voice input (click to start/stop)';
+  }
+}
+
+function setMicStatus(msg) {
+  const el = document.getElementById('micStatus');
+  if (el) el.textContent = msg;
+}
+
+function toggleMic() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    setMicStatus('⚠ Speech recognition not supported — use Chrome or Edge');
+    setTimeout(() => setMicStatus('Ctrl+Enter to send · 🎤 mic to speak'), 4000);
+    return;
+  }
+
+  if (isRecording) {
+    recognition?.stop();
+    return;
+  }
+
+  recognition = initSpeech();
+  if (!recognition) return;
+  try {
+    recognition.start();
+  } catch(e) {
+    setMicStatus('⚠ Could not start mic: ' + e.message);
+  }
+}
+
+
 window.addEventListener('load', () => {
   initM('dark');
   load('flowchart');
