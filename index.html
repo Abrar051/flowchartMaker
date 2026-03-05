@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flowchart Maker by Abrar</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js" crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #09090f;
+  --surface: #101018;
+  --surface2: #18181f;
+  --surface3: #1e1e28;
+  --border: #252535;
+  --accent: #7c6fff;
+  --accent2: #ff6fb0;
+  --accent3: #6fffd4;
+  --text: #e2e2f0;
+  --muted: #5a5a72;
+  --dim: #8888a0;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Syne', sans-serif;
+}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* HEADER */
+header { display:flex; align-items:center; gap:10px; padding:0 14px; height:50px; flex-shrink:0; border-bottom:1px solid var(--border); background:var(--surface); }
+.logo { display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; white-space:nowrap; }
+.logo-icon { width:26px; height:26px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; }
+.logo em { color:var(--accent); font-style:normal; }
+.vsep { width:1px; height:22px; background:var(--border); flex-shrink:0; }
+.hlabel { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.9px; color:var(--muted); white-space:nowrap; }
+.hgroup { display:flex; align-items:center; gap:7px; }
+select { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--sans); font-size:12px; font-weight:600; padding:4px 22px 4px 8px; border-radius:6px; cursor:pointer; outline:none; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235a5a72' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 7px center; transition:border-color .15s; }
+select:hover { border-color:var(--accent); }
+select option { background:#18181f; }
+.dirbg { display:flex; gap:2px; background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:2px; }
+.dirb { background:transparent; border:none; color:var(--dim); font-family:var(--mono); font-size:10px; font-weight:600; padding:3px 8px; border-radius:5px; cursor:pointer; transition:all .13s; white-space:nowrap; }
+.dirb:hover { color:var(--text); }
+.dirb.on { background:var(--accent); color:#fff; box-shadow:0 0 8px rgba(124,111,255,.3); }
+.spacer { flex:1; }
+.btn { display:flex; align-items:center; gap:5px; padding:5px 12px; border-radius:6px; border:none; font-family:var(--sans); font-size:12px; font-weight:700; cursor:pointer; transition:all .14s; white-space:nowrap; }
+.btn-ghost { background:var(--surface2); border:1px solid var(--border); color:var(--dim); }
+.btn-ghost:hover { color:var(--text); border-color:var(--accent); }
+.btn-primary { background:linear-gradient(135deg,var(--accent),#9d8fff); color:#fff; box-shadow:0 0 12px rgba(124,111,255,.25); }
+.btn-primary:hover { transform:translateY(-1px); }
+.btn-export { background:linear-gradient(135deg,var(--accent3),#40c9a0); color:#0a2a22; }
+.btn-export:hover { transform:translateY(-1px); }
+.btn-ai { background:linear-gradient(135deg,#f59e0b,#f97316); color:#1a0a00; font-weight:800; box-shadow:0 0 14px rgba(245,158,11,.28); }
+.btn-ai:hover { transform:translateY(-1px); box-shadow:0 3px 20px rgba(245,158,11,.5); }
+
+/* BODY */
+.body { display:flex; flex:1; overflow:hidden; }
+
+/* SIDEBAR */
+.sidebar { width:178px; flex-shrink:0; border-right:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; overflow:hidden; }
+.sb-head { padding:8px 10px 6px; border-bottom:1px solid var(--border); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
+.sb-scroll { flex:1; overflow-y:auto; padding:5px; }
+.grp-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); padding:5px 6px 2px; display:block; }
+.ditem { display:flex; align-items:center; gap:6px; width:100%; background:transparent; border:1px solid transparent; color:var(--dim); font-family:var(--sans); font-size:11.5px; font-weight:600; padding:5px 7px; border-radius:6px; cursor:pointer; transition:all .12s; text-align:left; margin-bottom:1px; }
+.ditem .ico { font-size:13px; width:17px; text-align:center; flex-shrink:0; }
+.ditem .bdg { margin-left:auto; font-size:8px; padding:1px 4px; border-radius:3px; background:var(--surface3); color:var(--muted); flex-shrink:0; }
+.ditem:hover { background:var(--surface2); color:var(--text); }
+.ditem.on { background:rgba(124,111,255,.1); color:var(--accent); border-color:rgba(124,111,255,.18); }
+.ditem.on .bdg { background:rgba(124,111,255,.18); color:var(--accent); }
+
+/* EDITOR */
+.epanel { display:flex; flex-direction:column; flex:1; border-right:1px solid var(--border); overflow:hidden; min-width:0; }
+.pbar { display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; }
+.ptag { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); display:flex; align-items:center; gap:5px; }
+.ptag::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--accent2); box-shadow:0 0 6px var(--accent2); }
+.ptag.g::before { background:var(--accent3); box-shadow:0 0 6px var(--accent3); }
+.linfo { font-size:10px; font-family:var(--mono); color:var(--muted); margin-left:auto; }
+#editor { flex:1; background:var(--bg); color:#c5cde0; font-family:var(--mono); font-size:13px; line-height:1.75; border:none; outline:none; resize:none; padding:16px 18px; tab-size:2; overflow:auto; caret-color:var(--accent); }
+#editor::selection { background:rgba(124,111,255,.2); }
+
+/* PREVIEW */
+.ppanel { display:flex; flex-direction:column; flex:1.15; overflow:hidden; background:var(--bg); min-width:0; }
+.prev-area {
+  flex:1; overflow:hidden; position:relative;
+  cursor:grab; user-select:none; -webkit-user-select:none;
+}
+.prev-area.grabbing { cursor:grabbing; }
+.prev-area::before { content:''; position:absolute; inset:0; pointer-events:none; background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.016) 1px,transparent 1px); background-size:28px 28px; }
+/* The transform layer */
+#viewport {
+  position:absolute; top:0; left:0;
+  transform-origin: 0 0;
+  will-change: transform;
+  display:flex; align-items:center; justify-content:center;
+}
+#preview { display:flex; align-items:center; justify-content:center; padding:40px; }
+#preview svg { border-radius:8px; filter:drop-shadow(0 6px 24px rgba(0,0,0,.5)); display:block; }
+
+/* Zoom controls */
+.zoom-controls {
+  position:absolute; bottom:14px; right:14px; z-index:10;
+  display:flex; align-items:center; gap:4px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:4px; box-shadow:0 4px 16px rgba(0,0,0,.4);
+}
+.zc-btn {
+  width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+  background:transparent; border:none; color:var(--dim); border-radius:5px;
+  cursor:pointer; font-size:14px; font-weight:700; transition:all .13s; line-height:1;
+  font-family:var(--mono);
+}
+.zc-btn:hover { background:var(--surface2); color:var(--text); }
+.zc-sep { width:1px; height:16px; background:var(--border); }
+.zc-level { font-size:10px; font-family:var(--mono); color:var(--dim); padding:0 5px; min-width:36px; text-align:center; }
+
+.errbox { background:rgba(255,70,70,.07); border:1px solid rgba(255,70,70,.22); border-radius:9px; padding:14px 18px; color:#ff8888; font-family:var(--mono); font-size:11.5px; max-width:420px; line-height:1.6; }
+.errbox strong { display:block; margin-bottom:5px; color:#ff6666; }
+.empty { text-align:center; color:var(--muted); }
+.empty .big { font-size:36px; opacity:.3; margin-bottom:10px; }
+.empty p { font-size:12.5px; }
+
+/* STATUS */
+.sbar { display:flex; align-items:center; gap:8px; padding:4px 14px; border-top:1px solid var(--border); background:var(--surface); font-size:10px; color:var(--muted); font-family:var(--mono); flex-shrink:0; }
+.sdot { width:6px; height:6px; border-radius:50%; background:var(--accent3); box-shadow:0 0 5px var(--accent3); flex-shrink:0; }
+.sdot.e { background:#ff5555; box-shadow:0 0 5px #ff5555; }
+.sdot.s { background:var(--accent); box-shadow:0 0 5px var(--accent); animation:blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+/* MODAL */
+.ovl { position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(5px); display:flex; align-items:center; justify-content:center; z-index:200; opacity:0; pointer-events:none; transition:opacity .2s; }
+.ovl.open { opacity:1; pointer-events:all; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:22px; width:330px; box-shadow:0 18px 55px rgba(0,0,0,.5); transform:translateY(8px); transition:transform .2s; }
+.ovl.open .modal { transform:translateY(0); }
+.modal h3 { font-size:16px; font-weight:800; margin-bottom:3px; }
+.modal .sub { font-size:11.5px; color:var(--muted); margin-bottom:18px; }
+.olabel { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.9px; color:var(--muted); margin-bottom:7px; display:block; }
+.pills { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:14px; }
+.pill { padding:4px 11px; border-radius:99px; border:1px solid var(--border); background:var(--surface2); color:var(--dim); font-family:var(--sans); font-size:11.5px; font-weight:600; cursor:pointer; transition:all .12s; }
+.pill:hover { border-color:var(--accent); color:var(--accent); }
+.pill.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+.qnote { font-size:10px; font-family:var(--mono); color:var(--muted); margin-top:3px; }
+.mrow { display:flex; gap:7px; margin-top:18px; }
+.mrow .btn { flex:1; justify-content:center; }
+/* AI CHAT */
+.ai-msg { display:flex; flex-direction:column; gap:4px; }
+.ai-msg.ai-user { align-items:flex-end; }
+.ai-msg.ai-sys, .ai-msg.ai-bot { align-items:flex-start; }
+.ai-bubble { font-size:12.5px; line-height:1.55; padding:10px 13px; border-radius:10px; max-width:100%; word-break:break-word; }
+.ai-user .ai-bubble { background:linear-gradient(135deg,#f59e0b22,#f9731622); border:1px solid rgba(245,158,11,.3); color:var(--text); border-bottom-right-radius:3px; }
+.ai-sys .ai-bubble, .ai-bot .ai-bubble { background:var(--surface2); border:1px solid var(--border); color:var(--text); border-bottom-left-radius:3px; }
+.ai-label { font-size:9.5px; font-family:var(--mono); color:var(--muted); padding:0 4px; }
+.ai-code-block { background:var(--bg); border:1px solid var(--border); border-radius:8px; margin-top:6px; overflow:hidden; }
+.ai-code-top { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; border-bottom:1px solid var(--border); font-size:10px; color:var(--muted); font-family:var(--mono); }
+.ai-code-top button { background:var(--accent); border:none; color:#fff; font-size:10px; font-family:var(--sans); font-weight:700; padding:3px 9px; border-radius:4px; cursor:pointer; transition:all .13s; }
+.ai-code-top button:hover { background:#9d8fff; }
+.ai-code-pre { padding:10px 12px; font-family:var(--mono); font-size:11.5px; color:#c5cde0; line-height:1.65; overflow-x:auto; margin:0; white-space:pre; }
+.ai-typing { display:flex; align-items:center; gap:4px; padding:12px 14px; }
+.ai-typing span { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:tdot .9s infinite; }
+.ai-typing span:nth-child(2){animation-delay:.18s} .ai-typing span:nth-child(3){animation-delay:.36s}
+@keyframes tdot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-icon">◈</div>Flowchart Maker <em>by Abrar</em></div>
+  <div class="vsep"></div>
+  <div class="hgroup">
+    <span class="hlabel">Theme</span>
+    <select id="themeSelect">
+      <option value="dark">Dark</option>
+      <option value="default">Default</option>
+      <option value="forest">Forest</option>
+      <option value="base">Base</option>
+      <option value="neutral">Neutral</option>
+    </select>
+  </div>
+  <div class="vsep"></div>
+  <div class="hgroup">
+    <span class="hlabel">Direction</span>
+    <div class="dirbg">
+      <button class="dirb on" data-d="TD">↓TD</button>
+      <button class="dirb" data-d="LR">→LR</button>
+      <button class="dirb" data-d="BT">↑BT</button>
+      <button class="dirb" data-d="RL">←RL</button>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn btn-ai" onclick="openAI()">✦ AI Help</button>
+  <div class="vsep"></div>
+  <button class="btn btn-ghost" onclick="fmtCode()">⌥ Format</button>
+  <button class="btn btn-primary" onclick="render()">▶ Render</button>
+  <button class="btn btn-export" onclick="openModal()">↓ Export</button>
+</header>
+
+<div class="body">
+  <div class="sidebar">
+    <div class="sb-head">Diagram Types</div>
+    <div class="sb-scroll" id="sbScroll"></div>
+  </div>
+  <div class="epanel">
+    <div class="pbar"><div class="ptag">Editor</div><div class="linfo" id="linfo">—</div></div>
+    <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+  </div>
+  <div class="ppanel">
+    <div class="pbar"><div class="ptag g">Preview</div><div class="linfo" id="rinfo"></div></div>
+    <div class="prev-area" id="prevArea">
+      <div id="viewport">
+        <div id="preview"><div class="empty"><div class="big">⬡</div><p>Select a diagram type to begin</p></div></div>
+      </div>
+      <div class="zoom-controls">
+        <button class="zc-btn" onclick="zoomBy(-0.15)" title="Zoom out">−</button>
+        <span class="zc-level" id="zoomLabel">100%</span>
+        <button class="zc-btn" onclick="zoomBy(0.15)" title="Zoom in">+</button>
+        <div class="zc-sep"></div>
+        <button class="zc-btn" onclick="zoomFit()" title="Fit to screen" style="font-size:11px">⊡</button>
+        <button class="zc-btn" onclick="zoomReset()" title="Reset to 100%" style="font-size:10px">1:1</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sbar"><div class="sdot" id="sdot"></div><span id="stext">Ready — Ctrl+Enter to render</span><span style="margin-left:auto">Mermaid v10.9.0</span></div>
+
+<div class="ovl" id="ovl" onclick="maybeClose(event)">
+  <div class="modal">
+    <h3>Export Diagram</h3>
+    <div class="sub">Choose format and quality for download.</div>
+    <span class="olabel">Format</span>
+    <div class="pills" id="fp">
+      <div class="pill on" data-v="png" onclick="pp('fp',this)">PNG</div>
+      <div class="pill" data-v="svg" onclick="pp('fp',this)">SVG</div>
+      <div class="pill" data-v="jpg" onclick="pp('fp',this)">JPG</div>
+    </div>
+    <div id="qg">
+      <span class="olabel">Scale / Quality</span>
+      <div class="pills" id="qp">
+        <div class="pill" data-v="1" onclick="pp('qp',this)">1×</div>
+        <div class="pill on" data-v="2" onclick="pp('qp',this)">2×</div>
+        <div class="pill" data-v="3" onclick="pp('qp',this)">3×</div>
+        <div class="pill" data-v="4" onclick="pp('qp',this)">4×</div>
+      </div>
+      <div class="qnote" id="qn">2× — Retina quality</div>
+    </div>
+    <div class="mrow">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-export" onclick="doExport()">↓ Download</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ── AI API KEY MODAL ── -->
+<div class="ovl" id="aiKeyOvl" onclick="aiKeyMaybeClose(event)">
+  <div class="modal" style="width:380px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#f97316);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">✦</div>
+      <h3 style="margin:0">Connect Groq AI</h3>
+    </div>
+    <div class="sub">Enter your Groq Cloud API key to enable AI-powered diagram generation. Your key is stored only in session storage.</div>
+    <span class="olabel">Groq API Key</span>
+    <div style="position:relative;margin-bottom:6px">
+      <input id="aiKeyInput" type="password" placeholder="gsk_••••••••••••••••••••••••••••••"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:9px 40px 9px 12px;border-radius:8px;outline:none;transition:border-color .15s"
+        onkeydown="if(event.key==='Enter')verifyKey()"
+        oninput="document.getElementById('aiKeyErr').textContent=''"
+      />
+      <button onclick="toggleKeyVis()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--dim);font-size:13px" id="eyeBtn">👁</button>
+    </div>
+    <div id="aiKeyErr" style="font-size:11px;color:#ff7070;font-family:var(--mono);min-height:16px;margin-bottom:4px"></div>
+    <div style="font-size:10.5px;color:var(--muted);margin-bottom:16px">
+      Get your free key at <a href="https://console.groq.com" target="_blank" style="color:var(--accent);text-decoration:none">console.groq.com</a>
+    </div>
+    <div class="mrow" style="margin-top:0">
+      <button class="btn btn-ghost" onclick="closeAIKey()">Cancel</button>
+      <button class="btn btn-ai" id="verifyBtn" onclick="verifyKey()" style="flex:1;justify-content:center">✦ Connect &amp; Open Chat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── AI CHAT PANEL ── -->
+<div id="aiPanel" style="
+  position:fixed; top:0; right:0; width:380px; height:100vh;
+  background:var(--surface); border-left:1px solid var(--border);
+  display:flex; flex-direction:column; z-index:150;
+  transform:translateX(100%); transition:transform .25s cubic-bezier(.4,0,.2,1);
+  box-shadow:-8px 0 40px rgba(0,0,0,.5);
+">
+  <!-- Chat header -->
+  <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <div style="width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#f59e0b,#f97316);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">✦</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:800;font-size:13px;letter-spacing:-.2px">AI Diagram Assistant</div>
+      <select id="aiModelSelect" onchange="GROQ_MODEL=this.value;document.getElementById('aiModelLabel').textContent=this.options[this.selectedIndex].text+' · Groq'"
+        style="background:transparent;border:none;color:var(--muted);font-size:10px;font-family:var(--mono);cursor:pointer;outline:none;padding:0;margin-top:1px;max-width:220px">
+      </select>
+    </div>
+    <button onclick="closeAIChat()" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;border-radius:4px" title="Close">✕</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="aiMessages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px">
+    <div class="ai-msg ai-sys">
+      <div class="ai-bubble">👋 Hi! Describe the diagram you want — I'll generate Mermaid code for you. You can ask for flowcharts, sequence diagrams, ER diagrams, and more.</div>
+    </div>
+  </div>
+
+  <!-- Input area -->
+  <div style="padding:12px;border-top:1px solid var(--border);flex-shrink:0">
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <textarea id="aiInput" placeholder="Describe your diagram… e.g. 'A login flow with OAuth'" rows="3"
+        style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:12.5px;padding:9px 12px;border-radius:8px;outline:none;resize:none;line-height:1.5;transition:border-color .15s"
+        onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();sendAI()}"
+      ></textarea>
+      <button onclick="sendAI()" id="aiSendBtn" style="
+        background:linear-gradient(135deg,#f59e0b,#f97316);color:#1a0a00;
+        border:none;border-radius:8px;width:38px;height:38px;cursor:pointer;
+        font-size:16px;display:flex;align-items:center;justify-content:center;
+        flex-shrink:0;transition:all .15s;font-weight:700
+      " title="Send (Ctrl+Enter)">↑</button>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:5px;font-family:var(--mono)">Ctrl+Enter to send · AI outputs Mermaid code you can apply to the editor</div>
+  </div>
+
+  <!-- Key management footer -->
+  <div style="padding:8px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <span style="font-size:10px;color:var(--muted);font-family:var(--mono)">🔑 API key stored in session</span>
+    <button onclick="changeKey()" style="background:none;border:none;color:var(--dim);font-size:10px;cursor:pointer;font-family:var(--mono);text-decoration:underline">Change key</button>
+  </div>
+</div>
+
+<!-- ── AI ERROR MODAL ── -->
+<div class="ovl" id="aiErrOvl" onclick="closeAIErr()">
+  <div class="modal" style="width:360px;border-color:rgba(255,80,80,.3)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="font-size:24px">⚠️</div>
+      <h3 style="color:#ff7070;margin:0" id="aiErrTitle">AI Error</h3>
+    </div>
+    <div id="aiErrMsg" style="font-size:12.5px;color:var(--text);line-height:1.6;margin-bottom:16px;font-family:var(--mono)"></div>
+    <div class="mrow" style="margin-top:0">
+      <button class="btn btn-ghost" onclick="closeAIErr()" style="flex:1;justify-content:center">Dismiss</button>
+      <button class="btn" onclick="closeAIErr();changeKey()" style="flex:1;justify-content:center;background:rgba(255,100,100,.12);border:1px solid rgba(255,100,100,.3);color:#ff8888">🔑 Change Key</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const ITEMS = [
+  { g:'Flow & Process', items:[
+    { id:'flowchart', label:'Flowchart', ico:'⬡', bdg:'graph', dir:true,
+      code:`graph TD
+    A([🚀 Start]) --> B{Check Input}
+    B -->|Valid| C[Process Data]
+    B -->|Invalid| D[Show Error]
+    C --> E[Run Analysis]
+    E --> F{Result OK?}
+    F -->|Yes| G([✅ Success])
+    F -->|No| H[Retry Logic]
+    H -->|Max retries| I([❌ Fail])
+    H -->|Retry| E
+    D --> J([⚠ Abort])` },
+    { id:'state', label:'State Diagram', ico:'🔄', bdg:'state', dir:false,
+      code:`stateDiagram-v2
+    [*] --> Idle
+    Idle --> Loading : start()
+    Loading --> Success : data received
+    Loading --> Error : request failed
+    Success --> Idle : reset()
+    Error --> Loading : retry()
+    Error --> Idle : dismiss()
+    Success --> [*]` },
+    { id:'journey', label:'User Journey', ico:'🧭', bdg:'journey', dir:false,
+      code:`journey
+    title User Onboarding
+    section Sign Up
+      Visit landing page: 5: User
+      Click Sign Up: 4: User
+      Fill in form: 3: User, System
+    section Verification
+      Receive email: 4: User, System
+      Click verify link: 5: User
+    section First Use
+      Explore dashboard: 4: User
+      Create first project: 5: User
+      Invite teammates: 3: User` },
+  ]},
+  { g:'UML & Architecture', items:[
+    { id:'class', label:'Class Diagram', ico:'🧱', bdg:'class', dir:false,
+      code:`classDiagram
+    class Animal {
+        +String name
+        +int age
+        +makeSound() void
+        +move() void
+    }
+    class Dog {
+        +String breed
+        +fetch() void
+        +bark() void
+    }
+    class Cat {
+        +bool indoor
+        +purr() void
+    }
+    class Owner {
+        +String name
+        +List~Animal~ pets
+        +addPet(Animal) void
+    }
+    Animal <|-- Dog
+    Animal <|-- Cat
+    Owner "1" --> "*" Animal : owns` },
+    { id:'er', label:'ER Diagram', ico:'🗃️', bdg:'er', dir:false,
+      code:`erDiagram
+    USER {
+        int id PK
+        string name
+        string email
+        datetime created_at
+    }
+    ORDER {
+        int id PK
+        int user_id FK
+        decimal total
+        string status
+    }
+    PRODUCT {
+        int id PK
+        string name
+        decimal price
+        int stock
+    }
+    ORDER_ITEM {
+        int order_id FK
+        int product_id FK
+        int quantity
+    }
+    USER ||--o{ ORDER : places
+    ORDER ||--|{ ORDER_ITEM : contains
+    PRODUCT ||--o{ ORDER_ITEM : "included in"` },
+    { id:'sequence', label:'Sequence Diagram', ico:'↔️', bdg:'seq', dir:false,
+      code:`sequenceDiagram
+    actor User
+    participant Browser
+    participant API
+    participant DB
+
+    User->>Browser: Submit login form
+    Browser->>API: POST /auth/login
+    API->>DB: SELECT user WHERE email=?
+    DB-->>API: User record
+    API->>API: Verify password hash
+    alt Valid credentials
+        API-->>Browser: 200 OK + JWT
+        Browser-->>User: Redirect to dashboard
+    else Invalid
+        API-->>Browser: 401 Unauthorized
+        Browser-->>User: Show error
+    end` },
+    { id:'c4', label:'C4 Context', ico:'🏛️', bdg:'c4', dir:false,
+      code:`C4Context
+    title System Context — E-Commerce
+    Enterprise_Boundary(b0, "Company") {
+        Person(customer, "Customer", "Shops online")
+        Person(admin, "Admin", "Manages catalog")
+        System(web, "Web App", "React SPA")
+        System(api, "Backend API", "Node.js services")
+        SystemDb(db, "PostgreSQL", "Stores all data")
+    }
+    System_Ext(pay, "Stripe", "Payment processing")
+    System_Ext(mail, "SendGrid", "Email delivery")
+
+    Rel(customer, web, "Uses", "HTTPS")
+    Rel(admin, web, "Manages via", "HTTPS")
+    Rel(web, api, "Calls", "REST/JSON")
+    Rel(api, db, "Reads/Writes", "SQL")
+    Rel(api, pay, "Charges via", "HTTPS")
+    Rel(api, mail, "Sends via", "HTTPS")` },
+  ]},
+  { g:'Time & Planning', items:[
+    { id:'gantt', label:'Gantt Chart', ico:'📅', bdg:'gantt', dir:false,
+      code:`gantt
+    title Project Roadmap Q1 2025
+    dateFormat  YYYY-MM-DD
+    excludes weekends
+
+    section Planning
+    Requirements     :done,    req,  2025-01-01, 2025-01-07
+    Architecture     :done,    arch, after req,  7d
+    Wireframes       :active,  wire, after arch, 5d
+
+    section Development
+    Backend API      :         back, 2025-01-20, 21d
+    Frontend UI      :         front,after back,  18d
+    Integration      :         integ,after front, 7d
+
+    section QA & Launch
+    Testing          :crit,    test, after integ, 10d
+    Bug Fixes        :crit,    fix,  after test,  5d
+    Go Live          :milestone, live, after fix, 1d` },
+    { id:'timeline', label:'Timeline', ico:'📌', bdg:'new', dir:false,
+      code:`timeline
+    title History of Web Development
+    1991 : HTML invented
+    1995 : JavaScript created
+         : PHP released
+    1996 : CSS introduced
+    2005 : Ajax popularised
+    2009 : Node.js released
+    2013 : React.js by Facebook
+    2016 : Vue.js stable
+    2019 : WebAssembly standard
+    2020 : Deno released
+    2023 : React Server Components` },
+  ]},
+  { g:'Data & Charts', items:[
+    { id:'pie', label:'Pie Chart', ico:'🥧', bdg:'pie', dir:false,
+      code:`pie showData
+    title Tech Stack Distribution
+    "TypeScript" : 38
+    "Python" : 27
+    "Go" : 18
+    "Rust" : 10
+    "Others" : 7` },
+    { id:'xy', label:'XY Chart', ico:'📊', bdg:'xy', dir:false,
+      code:`xychart-beta
+    title "Monthly Revenue 2024 ($K)"
+    x-axis [Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec]
+    y-axis "Revenue ($K)" 0 --> 130
+    bar  [42, 55, 63, 71, 58, 89, 95, 102, 88, 76, 110, 118]
+    line [42, 55, 63, 71, 58, 89, 95, 102, 88, 76, 110, 118]` },
+    { id:'quadrant', label:'Quadrant Chart', ico:'🎯', bdg:'quad', dir:false,
+      code:`quadrantChart
+    title Feature Priority Matrix
+    x-axis Low Effort --> High Effort
+    y-axis Low Impact --> High Impact
+    quadrant-1 Quick Wins
+    quadrant-2 Major Projects
+    quadrant-3 Fill-ins
+    quadrant-4 Thankless Tasks
+    Dark Mode: [0.2, 0.8]
+    Mobile App: [0.8, 0.9]
+    API Docs: [0.25, 0.55]
+    Refactoring: [0.7, 0.4]
+    Newsletter: [0.45, 0.3]
+    Analytics: [0.6, 0.75]
+    Onboarding: [0.35, 0.85]` },
+  ]},
+  { g:'Specialized', items:[
+    { id:'git', label:'Git Graph', ico:'🌿', bdg:'git', dir:false,
+      code:`gitGraph
+    commit id: "Initial commit"
+    commit id: "Add project structure"
+
+    branch develop
+    checkout develop
+    commit id: "Add auth module"
+    commit id: "Add API routes"
+
+    branch feature/ui
+    checkout feature/ui
+    commit id: "Build dashboard"
+    commit id: "Add dark mode"
+
+    checkout develop
+    merge feature/ui id: "Merge UI"
+
+    branch hotfix/login
+    checkout hotfix/login
+    commit id: "Fix login bug" type: HIGHLIGHT
+
+    checkout main
+    merge hotfix/login id: "Hotfix"
+    merge develop id: "v1.0 Release" tag: "v1.0"` },
+    { id:'mindmap', label:'Mind Map', ico:'🧠', bdg:'new', dir:false,
+      code:`mindmap
+  root((Mermaid))
+    Diagrams
+      Flowchart
+      Sequence
+      Class Diagram
+      ER Diagram
+      State Diagram
+    Charts
+      Pie Chart
+      XY Chart
+      Gantt
+      Quadrant
+    Specialized
+      Git Graph
+      Mind Map
+      Timeline
+      Sankey
+    Export
+      SVG
+      PNG
+      JPG` },
+    { id:'block', label:'Block Diagram', ico:'🔲', bdg:'flow', dir:true,
+      code:`graph TD
+    subgraph Client
+        UI["Browser / App"]
+    end
+    subgraph Gateway
+        LB["Load Balancer"]
+        AUTH["Auth Service"]
+    end
+    subgraph Services
+        API["REST API"]
+        WORKER["Background Worker"]
+        WS["WebSocket Server"]
+    end
+    subgraph Storage
+        DB[("PostgreSQL")]
+        CACHE[("Redis Cache")]
+        QUEUE[("Message Queue")]
+    end
+
+    UI --> LB
+    LB --> AUTH
+    AUTH --> API
+    API --> DB
+    API --> CACHE
+    API --> QUEUE
+    QUEUE --> WORKER
+    WORKER --> DB
+    UI --> WS
+    WS --> CACHE` },
+    { id:'sankey', label:'Sankey', ico:'🌊', bdg:'beta', dir:false,
+      code:`sankey-beta
+Solar,Electricity grid,570
+Wind,Electricity grid,330
+Hydro,Electricity grid,150
+Electricity grid,Homes,200
+Electricity grid,Industry,400
+Electricity grid,Transport,50
+Electricity grid,Losses,400
+Gas,Industry,280
+Gas,Homes,180
+Oil,Transport,420
+Oil,Industry,60` },
+    { id:'req', label:'Requirement', ico:'📋', bdg:'req', dir:false,
+      code:`requirementDiagram
+
+requirement test_req {
+    id: 1
+    text: the test text.
+    risk: high
+    verifymethod: test
+}
+
+functionalRequirement login_req {
+    id: 2
+    text: Users must authenticate before accessing data.
+    risk: medium
+    verifymethod: inspection
+}
+
+performanceRequirement perf_req {
+    id: 3
+    text: Response time under 200ms for 95th percentile.
+    risk: medium
+    verifymethod: test
+}
+
+element backend {
+    type: component
+    docref: architecture.md
+}
+
+backend - satisfies -> test_req
+backend - satisfies -> login_req
+backend - satisfies -> perf_req` },
+  ]},
+];
+
+// ── STATE
+let svg = null, dbn = null, activeId = 'flowchart';
+const qL = {'1':'1× Standard','2':'2× Retina','3':'3× Print ready','4':'4× Ultra HD'};
+
+// ── MERMAID
+let currentTheme = 'dark';
+function initM(theme='dark') {
+  currentTheme = theme;
+  mermaid.initialize({
+    startOnLoad: false,
+    theme,
+    logLevel: 'fatal',
+    securityLevel: 'loose',
+    fontFamily: 'JetBrains Mono, monospace',
+    flowchart: { curve: 'basis', padding: 20 },
+    sequence: { actorMargin: 50 },
+    gantt: { axisFormat: '%m/%d' }
+  });
+}
+initM();
+
+// ── SIDEBAR
+function buildSB() {
+  const sb = document.getElementById('sbScroll');
+  sb.innerHTML = '';
+  ITEMS.forEach(grp => {
+    const g = document.createElement('div');
+    g.innerHTML = `<span class="grp-label">${grp.g}</span>`;
+    grp.items.forEach(it => {
+      const b = document.createElement('button');
+      b.className = 'ditem' + (it.id===activeId?' on':'');
+      b.innerHTML = `<span class="ico">${it.ico}</span>${it.label}<span class="bdg">${it.bdg}</span>`;
+      b.onclick = () => load(it.id);
+      g.appendChild(b);
+    });
+    sb.appendChild(g);
+  });
+}
+buildSB();
+
+function getItem(id) {
+  for (const g of ITEMS) { const f=g.items.find(i=>i.id===id); if(f) return f; }
+  return null;
+}
+
+function load(id) {
+  activeId = id;
+  const it = getItem(id);
+  if (!it) return;
+  document.getElementById('editor').value = it.code;
+  updateLI();
+  syncDir();
+  buildSB();
+  render();
+}
+
+// ── RENDER
+async function render() {
+  const code = document.getElementById('editor').value.trim();
+  const out = document.getElementById('preview');
+  const dot = document.getElementById('sdot');
+  const st = document.getElementById('stext');
+  const ri = document.getElementById('rinfo');
+  if (!code) { out.innerHTML='<div class="empty"><div class="big">⬡</div><p>Paste Mermaid code to start</p></div>'; return; }
+  dot.className='sdot s'; st.textContent='Rendering…';
+  const t0=performance.now();
+  // Use a unique ID each time and render into a detached element
+  const uid = 'mer' + Math.random().toString(36).slice(2,9);
+  try {
+    // Remove any leftover mermaid containers from previous renders
+    document.querySelectorAll('[id^="mer"]').forEach(el => {
+      if (el !== out) el.remove();
+    });
+    const { svg: s } = await mermaid.render(uid, code);
+    svg = s;
+    out.innerHTML = s;
+    const ms=(performance.now()-t0).toFixed(0);
+    dot.className='sdot'; st.textContent=`Rendered in ${ms}ms`; ri.textContent=`${ms}ms`;
+    const el=out.querySelector('svg');
+    if(el){ el.style.maxWidth='none'; el.style.height='auto'; }
+    fitAfterRender();
+  } catch(e) {
+    svg=null;
+    const msg = (e.message||String(e)).replace(/\n/g,' ').substring(0,300);
+    out.innerHTML=`<div class="errbox"><strong>⚠ Syntax Error</strong>${msg}</div>`;
+    dot.className='sdot e'; st.textContent='Error — check syntax'; ri.textContent='';
+  }
+}
+
+// ── EDITOR
+const ed = document.getElementById('editor');
+ed.addEventListener('input', ()=>{ updateLI(); syncDir(); clearTimeout(dbn); dbn=setTimeout(render,550); });
+ed.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();render();}
+  if(e.key==='Tab'){e.preventDefault();const s=ed.selectionStart,n=ed.selectionEnd;ed.value=ed.value.substring(0,s)+'  '+ed.value.substring(n);ed.selectionStart=ed.selectionEnd=s+2;updateLI();}
+});
+function updateLI(){const l=(ed.value.match(/\n/g)||[]).length+1;document.getElementById('linfo').textContent=`${l} line${l!==1?'s':''}`;}
+
+// ── THEME
+document.getElementById('themeSelect').addEventListener('change', function() {
+  initM(this.value);
+  // Small delay to let mermaid settle after reinit
+  setTimeout(render, 50);
+});
+
+// ── DIRECTION
+document.querySelectorAll('.dirb').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const d=b.dataset.d, code=ed.value;
+    const upd=code.replace(/^(\s*(?:graph|flowchart)\s+)(TB|TD|LR|RL|BT)/im,(_,p)=>p+d);
+    ed.value=(upd!==code)?upd:`graph ${d}\n`+code;
+    updateLI();
+    document.querySelectorAll('.dirb').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    render();
+  });
+});
+function syncDir(){
+  const m=ed.value.match(/^\s*(?:graph|flowchart)\s+(TB|TD|LR|RL|BT)/im);
+  if(m){const d=m[1].toUpperCase()==='TB'?'TD':m[1].toUpperCase();document.querySelectorAll('.dirb').forEach(b=>b.classList.toggle('on',b.dataset.d===d));}
+}
+
+// ── FORMAT
+function fmtCode(){ed.value=ed.value.split('\n').map(l=>l.trimEnd()).join('\n').trim();updateLI();}
+
+// ── MODAL
+function openModal(){if(!svg){alert('Render a diagram first.');return;}document.getElementById('ovl').classList.add('open');}
+function closeModal(){document.getElementById('ovl').classList.remove('open');}
+function maybeClose(e){if(e.target===document.getElementById('ovl'))closeModal();}
+function pp(gid,el){
+  document.querySelectorAll(`#${gid} .pill`).forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  if(gid==='qp')document.getElementById('qn').textContent=qL[el.dataset.v]||'';
+  if(gid==='fp'){const s=el.dataset.v==='svg';document.getElementById('qg').style.opacity=s?'0.4':'1';document.getElementById('qg').style.pointerEvents=s?'none':'';}
+}
+function doExport(){
+  const f=document.querySelector('#fp .on').dataset.v;
+  const sc=parseInt(document.querySelector('#qp .on').dataset.v);
+  if(f==='svg')xSVG(); else xRaster(f,sc);
+  closeModal();
+}
+function xSVG(){const b=new Blob([svg],{type:'image/svg+xml'});const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(b),download:'diagram.svg'});a.click();URL.revokeObjectURL(a.href);}
+function xRaster(fmt,sc){
+  const el=document.querySelector('#preview svg');if(!el)return;
+  // Use natural SVG dimensions, not screen dimensions
+  const vb = el.viewBox.baseVal;
+  const w = vb.width || parseFloat(el.getAttribute('width')) || 800;
+  const h = vb.height || parseFloat(el.getAttribute('height')) || 600;
+  const cv=document.createElement('canvas');cv.width=w*sc;cv.height=h*sc;
+  const ctx=cv.getContext('2d');
+  if(fmt==='jpg'){ctx.fillStyle=document.getElementById('themeSelect').value==='dark'?'#0d0d14':'#fff';ctx.fillRect(0,0,cv.width,cv.height);}
+  const d=new XMLSerializer().serializeToString(el);
+  const blob=new Blob([d],{type:'image/svg+xml;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const img=new Image();
+  img.onload=()=>{ctx.drawImage(img,0,0,cv.width,cv.height);URL.revokeObjectURL(url);cv.toBlob(b=>{const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(b),download:`diagram.${fmt}`});a.click();},fmt==='jpg'?'image/jpeg':'image/png',fmt==='jpg'?.95:1);};
+  img.onerror=()=>alert('Export failed — try SVG format.');
+  img.src=url;
+}
+
+// ── PAN / ZOOM ENGINE ─────────────────────────────────────────────────────
+const prevArea = document.getElementById('prevArea');
+const viewport = document.getElementById('viewport');
+let vx = 0, vy = 0, vz = 1;
+let dragging = false, lastX = 0, lastY = 0;
+
+function applyTransform(animate) {
+  if (animate) viewport.style.transition = 'transform .18s ease';
+  else viewport.style.transition = 'none';
+  viewport.style.transform = `translate(${vx}px,${vy}px) scale(${vz})`;
+  document.getElementById('zoomLabel').textContent = Math.round(vz * 100) + '%';
+  if (animate) setTimeout(() => viewport.style.transition = 'none', 200);
+}
+
+function zoomBy(delta, cx, cy) {
+  const area = prevArea.getBoundingClientRect();
+  const pivotX = cx ?? area.width / 2;
+  const pivotY = cy ?? area.height / 2;
+  const newZ = Math.min(8, Math.max(0.1, vz + delta));
+  const scale = newZ / vz;
+  vx = pivotX - scale * (pivotX - vx);
+  vy = pivotY - scale * (pivotY - vy);
+  vz = newZ;
+  applyTransform(cx === undefined); // animate only for button clicks
+}
+
+function zoomReset() {
+  const area = prevArea.getBoundingClientRect();
+  vz = 1; vx = 0; vy = 0;
+  // Center in viewport
+  const vp = viewport.getBoundingClientRect();
+  vx = (area.width - vp.width / vz) / 2;
+  vy = (area.height - vp.height / vz) / 2;
+  applyTransform(true);
+}
+
+function zoomFit() {
+  const area = prevArea.getBoundingClientRect();
+  const svg = document.querySelector('#preview svg');
+  if (!svg) { zoomReset(); return; }
+  const svgW = svg.getBoundingClientRect().width / vz;
+  const svgH = svg.getBoundingClientRect().height / vz;
+  const pad = 60;
+  const fitZ = Math.min((area.width - pad) / svgW, (area.height - pad) / svgH, 4);
+  vz = fitZ;
+  vx = (area.width - svgW * fitZ) / 2;
+  vy = (area.height - svgH * fitZ) / 2;
+  applyTransform(true);
+}
+
+// Mouse drag
+prevArea.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  if (e.target.closest('.zoom-controls')) return;
+  dragging = true; lastX = e.clientX; lastY = e.clientY;
+  prevArea.classList.add('grabbing');
+  e.preventDefault();
+});
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  vx += e.clientX - lastX;
+  vy += e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  applyTransform(false);
+});
+window.addEventListener('mouseup', () => { dragging = false; prevArea.classList.remove('grabbing'); });
+
+// Touch drag & pinch
+let lastTouches = null, lastPinchDist = null;
+prevArea.addEventListener('touchstart', e => {
+  if (e.target.closest('.zoom-controls')) return;
+  lastTouches = e.touches;
+  if (e.touches.length === 2) lastPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  e.preventDefault();
+}, { passive: false });
+prevArea.addEventListener('touchmove', e => {
+  if (e.target.closest('.zoom-controls')) return;
+  if (e.touches.length === 1 && lastTouches?.length === 1) {
+    vx += e.touches[0].clientX - lastTouches[0].clientX;
+    vy += e.touches[0].clientY - lastTouches[0].clientY;
+    applyTransform(false);
+  } else if (e.touches.length === 2) {
+    const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    if (lastPinchDist) {
+      const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - prevArea.getBoundingClientRect().left;
+      const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - prevArea.getBoundingClientRect().top;
+      zoomBy((dist - lastPinchDist) * 0.008, cx, cy);
+    }
+    lastPinchDist = dist;
+  }
+  lastTouches = e.touches;
+  e.preventDefault();
+}, { passive: false });
+prevArea.addEventListener('touchend', () => { lastTouches = null; lastPinchDist = null; });
+
+// Scroll wheel zoom
+prevArea.addEventListener('wheel', e => {
+  if (e.target.closest('.zoom-controls')) return;
+  e.preventDefault();
+  const area = prevArea.getBoundingClientRect();
+  const cx = e.clientX - area.left;
+  const cy = e.clientY - area.top;
+  const delta = e.deltaY < 0 ? 0.12 : -0.12;
+  zoomBy(delta, cx, cy);
+}, { passive: false });
+
+// Auto-fit after each render
+function fitAfterRender() {
+  // Small delay to let SVG paint and get real dimensions
+  setTimeout(zoomFit, 80);
+}
+
+
+// ── AI ASSISTANT ──────────────────────────────────────────────────────────
+const GROQ_MODELS = [
+  { id: 'openai/gpt-oss-120b',                label: 'GPT OSS 120B (Default)' },
+  { id: 'llama-3.3-70b-versatile',            label: 'Llama 3.3 70B' },
+  { id: 'llama-3.1-8b-instant',               label: 'Llama 3.1 8B (Fastest)' },
+  { id: 'gemma2-9b-it',                        label: 'Gemma 2 9B' },
+  { id: 'meta-llama/llama-4-maverick-17b-128e-instruct', label: 'Llama 4 Maverick 17B' },
+];
+let GROQ_MODEL = 'openai/gpt-oss-120b';
+const GROQ_API = 'https://api.groq.com/openai/v1/chat/completions';
+const AI_SYSTEM = `You are an expert Mermaid diagram generator. The user will describe a diagram in plain English.
+Your job: output ONLY valid Mermaid diagram code — nothing else.
+Rules:
+- Start directly with the diagram type keyword (e.g. graph TD, sequenceDiagram, classDiagram, etc.)
+- Do NOT include markdown fences, explanations, or commentary before or after the code
+- Use correct Mermaid v10 syntax
+- Choose the most appropriate diagram type for the description`;
+
+let aiHistory = [];
+
+function getKey() { return sessionStorage.getItem('groq_api_key'); }
+function setKey(k) { sessionStorage.setItem('groq_api_key', k); }
+function clearKey() { sessionStorage.removeItem('groq_api_key'); }
+
+function openAI() {
+  if (getKey()) { openAIChat(); }
+  else {
+    document.getElementById('aiKeyInput').value = '';
+    document.getElementById('aiKeyErr').textContent = '';
+    document.getElementById('aiKeyOvl').classList.add('open');
+    setTimeout(() => document.getElementById('aiKeyInput').focus(), 120);
+  }
+}
+function closeAIKey() { document.getElementById('aiKeyOvl').classList.remove('open'); }
+function aiKeyMaybeClose(e) { if (e.target === document.getElementById('aiKeyOvl')) closeAIKey(); }
+
+function toggleKeyVis() {
+  const inp = document.getElementById('aiKeyInput');
+  const btn = document.getElementById('eyeBtn');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+async function verifyKey() {
+  const key = document.getElementById('aiKeyInput').value.trim();
+  const errEl = document.getElementById('aiKeyErr');
+  const btn = document.getElementById('verifyBtn');
+  if (!key) { errEl.textContent = 'Please enter your API key.'; return; }
+  if (!key.startsWith('gsk_')) { errEl.textContent = 'Groq keys start with "gsk_" — double-check your key.'; return; }
+  btn.textContent = '⏳ Verifying…'; btn.disabled = true; errEl.textContent = '';
+  try {
+    let res;
+    try {
+      res = await fetch(GROQ_API, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: GROQ_MODEL, max_tokens: 10, messages: [{ role:'user', content:'hi' }] })
+      });
+    } catch(netErr) {
+      // Network error or CORS block
+      if (window.location.protocol === 'file:') {
+        throw new Error('⚠ File:// CORS block — open this file via a local server.\nRun: npx serve . OR python -m http.server 8080\nThen open http://localhost:8080');
+      }
+      throw new Error('Network error — check your internet connection.\nDetails: ' + netErr.message);
+    }
+    if (res.status === 401) throw new Error('Invalid API key — authentication failed (401).');
+    if (res.status === 404) throw new Error(`Model not found (404). Try a different model.`);
+    if (!res.ok) { const d = await res.json().catch(()=>{}); throw new Error(d?.error?.message || `HTTP ${res.status}`); }
+    setKey(key);
+    closeAIKey();
+    openAIChat();
+  } catch(e) {
+    errEl.textContent = e.message || 'Connection failed.';
+    errEl.style.whiteSpace = 'pre-line';
+  } finally {
+    btn.textContent = '✦ Connect & Open Chat'; btn.disabled = false;
+  }
+}
+
+function openAIChat() {
+  document.getElementById('aiPanel').style.transform = 'translateX(0)';
+  setTimeout(() => document.getElementById('aiInput').focus(), 250);
+}
+function closeAIChat() { document.getElementById('aiPanel').style.transform = 'translateX(100%)'; }
+function changeKey() { closeAIChat(); clearKey(); setTimeout(openAI, 220); }
+function showAIErr(title, msg) {
+  document.getElementById('aiErrTitle').textContent = title;
+  document.getElementById('aiErrMsg').textContent = msg;
+  document.getElementById('aiErrOvl').classList.add('open');
+}
+function closeAIErr() { document.getElementById('aiErrOvl').classList.remove('open'); }
+
+function aiAddMsg(role, content, code) {
+  const msgs = document.getElementById('aiMessages');
+  const wrap = document.createElement('div');
+  wrap.className = `ai-msg ai-${role}`;
+  if (role !== 'sys') {
+    const lbl = document.createElement('div');
+    lbl.className = 'ai-label';
+    lbl.textContent = role === 'user' ? 'You' : 'AI Assistant';
+    wrap.appendChild(lbl);
+  }
+  if (code) {
+    const bubble = document.createElement('div');
+    bubble.className = 'ai-bubble';
+    const cblock = document.createElement('div');
+    cblock.className = 'ai-code-block';
+    const ctop = document.createElement('div');
+    ctop.className = 'ai-code-top';
+    ctop.innerHTML = '<span>mermaid</span>';
+    const applyBtn = document.createElement('button');
+    applyBtn.textContent = '▶ Apply to Editor';
+    applyBtn.onclick = () => {
+      document.getElementById('editor').value = code;
+      updateLI(); syncDir(); render();
+      const ed = document.getElementById('editor');
+      ed.style.background = 'rgba(124,111,255,.1)';
+      setTimeout(() => ed.style.background = '', 500);
+    };
+    ctop.appendChild(applyBtn);
+    const pre = document.createElement('pre');
+    pre.className = 'ai-code-pre';
+    pre.textContent = code;
+    cblock.appendChild(ctop); cblock.appendChild(pre);
+    bubble.appendChild(cblock);
+    wrap.appendChild(bubble);
+  } else {
+    const bubble = document.createElement('div');
+    bubble.className = 'ai-bubble';
+    bubble.textContent = content;
+    wrap.appendChild(bubble);
+  }
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+  return wrap;
+}
+
+function aiAddTyping() {
+  const msgs = document.getElementById('aiMessages');
+  const wrap = document.createElement('div');
+  wrap.className = 'ai-msg ai-bot';
+  const lbl = document.createElement('div'); lbl.className='ai-label'; lbl.textContent='AI Assistant';
+  const bubble = document.createElement('div'); bubble.className='ai-bubble';
+  bubble.innerHTML = '<div class="ai-typing"><span></span><span></span><span></span></div>';
+  wrap.appendChild(lbl); wrap.appendChild(bubble);
+  msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
+  return wrap;
+}
+
+function extractMermaidCode(text) {
+  const fenced = text.match(/```(?:mermaid)?\s*([\s\S]*?)```/);
+  if (fenced) return fenced[1].trim();
+  const keywords = ['graph ','flowchart ','sequenceDiagram','classDiagram','erDiagram',
+    'stateDiagram','gantt','pie','mindmap','timeline','gitGraph','journey',
+    'quadrantChart','xychart-beta','sankey-beta','requirementDiagram','C4Context'];
+  const trimmed = text.trim();
+  if (keywords.some(k => trimmed.toLowerCase().startsWith(k.toLowerCase()))) return trimmed;
+  return null;
+}
+
+async function sendAI() {
+  const input = document.getElementById('aiInput');
+  const sendBtn = document.getElementById('aiSendBtn');
+  const prompt = input.value.trim();
+  if (!prompt) return;
+  const key = getKey();
+  if (!key) { showAIErr('No API Key', 'Session expired. Please reconnect your API key.'); return; }
+
+  aiAddMsg('user', prompt);
+  aiHistory.push({ role:'user', content: prompt });
+  input.value = '';
+  sendBtn.disabled = true; sendBtn.style.opacity = '0.5';
+  const typingEl = aiAddTyping();
+
+  try {
+    let res;
+    try {
+      res = await fetch(GROQ_API, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: GROQ_MODEL, max_tokens: 2048, temperature: 0.2,
+          messages: [{ role:'system', content: AI_SYSTEM }, ...aiHistory.slice(-10)]
+        })
+      });
+    } catch(netErr) {
+      typingEl.remove();
+      if (window.location.protocol === 'file:') {
+        showAIErr('CORS Error — file:// not allowed',
+          'Groq API blocks requests from file:// origins.\n\nFix: Open this file via a local server:\n• npx serve .\n• python -m http.server 8080\n\nThen open http://localhost:8080');
+        aiAddMsg('sys', '⚠ Open via http://localhost — file:// is blocked by CORS.');
+      } else {
+        showAIErr('Network Error', 'Could not reach Groq API.\nCheck your internet connection.\n\n' + netErr.message);
+      }
+      return;
+    }
+    typingEl.remove();
+    if (res.status === 401) { clearKey(); showAIErr('Invalid API Key', 'Your Groq API key was rejected (401 Unauthorized).\nIt may have been revoked. Please add a new key.'); return; }
+    if (res.status === 429) { showAIErr('Rate Limited', 'You have hit the Groq API rate limit.\nPlease wait a moment and try again.'); aiAddMsg('sys', '⚠ Rate limited — please wait and retry.'); return; }
+    if (!res.ok) { const d = await res.json().catch(()=>({})); throw new Error(d?.error?.message || `HTTP ${res.status}`); }
+    const data = await res.json();
+    const raw = data?.choices?.[0]?.message?.content;
+    if (!raw) throw new Error('Empty response received from Groq API.');
+    aiHistory.push({ role:'assistant', content: raw });
+    const code = extractMermaidCode(raw);
+    if (code) {
+      aiAddMsg('bot', null, code);
+    } else {
+      aiAddMsg('bot', raw);
+      showAIErr('Unexpected Output', `The AI returned a response that doesn't appear to contain valid Mermaid code.\n\n"${raw.substring(0,200)}"\n\nTry rephrasing your request more specifically.`);
+    }
+  } catch(e) {
+    typingEl?.remove();
+    aiAddMsg('sys', `⚠ Error: ${e.message}`);
+    showAIErr('AI Request Failed', (e.message || 'Unknown error') + '\n\nCheck your internet connection and API key, then try again.');
+  } finally {
+    sendBtn.disabled = false; sendBtn.style.opacity = '1';
+    document.getElementById('aiInput').focus();
+  }
+}
+
+// ── BOOT
+window.addEventListener('load', () => {
+  initM('dark');
+  load('flowchart');
+
+  // Populate AI model selector
+  const sel = document.getElementById('aiModelSelect');
+  if (sel) {
+    GROQ_MODELS.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.label;
+      if (m.id === GROQ_MODEL) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  // Warn if running from file:// - AI won't work due to CORS
+  if (window.location.protocol === 'file:') {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'position:fixed;bottom:36px;left:50%;transform:translateX(-50%);background:#7c3f00;color:#ffd080;font-size:11px;font-family:monospace;padding:7px 16px;border-radius:6px;z-index:300;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.5)';
+    warn.innerHTML = '⚠ AI features require a local server — run <b>npx serve .</b> and open via http://localhost';
+    document.body.appendChild(warn);
+    setTimeout(() => warn.remove(), 8000);
+  }
+});
+</script>
+</body>
+</html>
